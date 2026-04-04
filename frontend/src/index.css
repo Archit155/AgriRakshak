@@ -1,0 +1,26 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+@import "tailwindcss";
+
+@theme {
+  --color-gov-primary: #1A5632;
+  --color-gov-primary-dark: #0f3c21;
+  --color-gov-secondary: #F48220;
+  --color-gov-bg: #f8fafc;
+  --font-sans: 'Inter', 'Roboto', 'sans-serif';
+}
+
+@layer base {
+  body {
+    @apply bg-gov-bg text-gray-800 font-sans antialiased;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-gov-primary text-white font-medium py-2 px-4 rounded shadow hover:bg-gov-primary-dark transition duration-300;
+  }
+  .btn-accent {
+    @apply bg-gov-secondary text-white font-medium py-2 px-4 rounded shadow hover:bg-orange-600 transition duration-300;
+  }
+}
