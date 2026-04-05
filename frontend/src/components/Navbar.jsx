@@ -26,6 +26,13 @@ export default function Navbar() {
               <h1 className="text-xl font-bold leading-tight">{t('appTitle')}</h1>
               <p className="text-[10px] uppercase tracking-wider text-green-100">{t('appSubtitle')}</p>
             </div>
+            <div className="hidden lg:flex flex-col border-l border-white/20 pl-4">
+              <span className="text-[10px] text-white/60 font-medium">Security Status</span>
+              <span className="text-xs font-bold text-gov-secondary flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 bg-gov-secondary rounded-full animate-pulse"></span>
+                Our system trusts nothing by default.
+              </span>
+            </div>
           </Link>
 
           <div className="hidden sm:flex items-center gap-6 text-sm font-medium">

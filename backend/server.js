@@ -5,6 +5,7 @@ require('dotenv').config();
 
 const schemeRoutes = require('./routes/schemeRoutes');
 const authRoutes = require('./routes/authRoutes');
+const voiceRoutes = require('./routes/voiceRoutes');
 
 const app = express();
 
@@ -17,6 +18,7 @@ const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/krishi_por
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api', schemeRoutes);
+app.use('/api/voice', voiceRoutes);
 
 // Database connection
 mongoose.connect(MONGO_URI)

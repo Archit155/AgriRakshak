@@ -1,44 +1,30 @@
-import { useState } from 'react';
-import { UploadCloud, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { useState, useRef } from 'react';
+import axios from 'axios';
+import { UploadCloud, CheckCircle, AlertCircle, Loader2, Sun, Target, Maximize, ShieldCheck, Bot, Sparkles } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import { motion } from 'framer-motion';
 
 export default function PlantDetection() {
-  const { t, language } = useLanguage();
+  const { t } = useLanguage();
   const [image, setImage] = useState(null);
+  const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
-
-  // Fake AI Data based on language
-  const fakeResults = {
-    en: {
-      disease: 'Leaf Blight',
-      cause: 'Fungal infection due to excess moisture',
-      solution: ['Use recommended fungicide spray', 'Remove and burn affected leaves', 'Avoid overwatering']
-    },
-    hi: {
-      disease: 'पत्तियों का झुलसा रोग (Leaf Blight)',
-      cause: 'अत्यधिक नमी के कारण फंगल संक्रमण',
-      solution: ['अनुशंसित फफूंदनाशक स्प्रे का प्रयोग करें', 'प्रभावित पत्तियों को हटाकर जला दें', 'अधिक पानी देने से बचें']
-    },
-    mr: {
-      disease: 'पानांवरील करपा (Leaf Blight)',
-      cause: 'जास्त ओलाव्यामुळे बुरशीजन्य संसर्ग',
-      solution: ['शिफारस केलेले बुरशीनाशक फवारा', 'प्रभावित पाने काढून जाळून टाका', 'जास्त पाणी देणे टाळा']
-    }
-  };
+  const fileInputRef = useRef(null);
 
   const handleImageUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setImage(URL.createObjectURL(file));
+    const selectedFile = e.target.files[0];
+    if (selectedFile) {
+      setFile(selectedFile);
+      setImage(URL.createObjectURL(selectedFile));
       setResult(null);
       setError(null);
     }
   };
 
-  const handleAnalyze = () => {
-    if (!image) {
+  const handleAnalyze = async () => {
+    if (!file) {
       setError(t('selectImageFirst'));
       return;
     }
@@ -46,49 +32,108 @@ export default function PlantDetection() {
     setLoading(true);
     setError(null);
 
-    // Simulate AI processing delay
-    setTimeout(() => {
-      // Random confidence between 75 and 98
-      const confidence = Math.floor(Math.random() * (98 - 75 + 1)) + 75;
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    try {
+      const response = await axios.post('http://localhost:8000/predict', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+
+      const data = response.data;
       
       setResult({
-        ...fakeResults[language],
-        confidence
+        disease: data.prediction,
+        cause: "Analysis based on plant leaf visual indicators.",
+        solution: data.guidance,
+        confidence: data.confidence,
+        intelligence: data.model_intelligence
       });
+    } catch (err) {
+      console.error("Inference Error:", err);
+      setError("Analysis system encountered an issue. Please try again.");
+    } finally {
       setLoading(false);
-    }, 2500); // 2.5 seconds loading
+    }
   };
 
   return (
-    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mt-12 mb-8">
-      <h2 className="text-xl font-bold text-gray-800 mb-6 px-2 border-l-4 border-gov-primary flex items-center gap-2">
-        {t('checkCropHealth')}
-      </h2>
+    <div className="bg-white p-4 sm:p-8 rounded-3xl shadow-[0_10px_40px_rgba(0,0,0,0.04)] border border-gray-100 mt-12 mb-8">
+      <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+        <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+          <SparkleIcon className="w-6 h-6 text-gov-primary" />
+          {t('checkCropHealth')}
+        </h2>
+        
+        {/* Upload Tips Header */}
+        <div className="flex gap-4 overflow-x-auto pb-2 no-scrollbar">
+          <div className="flex items-center gap-2 bg-blue-50 px-3 py-1.5 rounded-full shrink-0">
+            <Sun className="w-4 h-4 text-blue-600" />
+            <span className="text-xs font-bold text-blue-700">{t('tipLighting')}</span>
+          </div>
+          <div className="flex items-center gap-2 bg-purple-50 px-3 py-1.5 rounded-full shrink-0">
+            <Target className="w-4 h-4 text-purple-600" />
+            <span className="text-xs font-bold text-purple-700">{t('tipFocus')}</span>
+          </div>
+          <div className="flex items-center gap-2 bg-orange-50 px-3 py-1.5 rounded-full shrink-0">
+            <Maximize className="w-4 h-4 text-orange-600" />
+            <span className="text-xs font-bold text-orange-700">{t('tipDistance')}</span>
+          </div>
+        </div>
+      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {/* Upload Section */}
-        <div className="flex flex-col gap-4">
-          <label 
-            className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer bg-gray-50 hover:bg-gray-100 transition"
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+        {/* Upload & Tips Area */}
+        <div className="space-y-6">
+          <motion.label 
+            whileHover={{ scale: 0.99 }}
+            whileTap={{ scale: 0.98 }}
+            className="group relative flex flex-col items-center justify-center w-full h-64 border-2 border-dashed border-gray-200 rounded-3xl cursor-pointer bg-gray-50/50 hover:bg-gray-50 hover:border-gov-primary transition-all overflow-hidden"
           >
             {image ? (
-              <img src={image} alt="Crop preview" className="h-full object-cover rounded-xl w-full" />
+              <>
+                <img src={image} alt="Crop preview" className="h-full object-cover w-full" />
+                <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
+                  <p className="text-white font-bold">Change Image</p>
+                </div>
+              </>
             ) : (
-              <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                <UploadCloud className="w-10 h-10 text-gov-primary mb-3" />
-                <p className="mb-2 text-sm text-gray-500 font-semibold">{t('uploadImage')}</p>
+              <div className="flex flex-col items-center justify-center p-6 text-center">
+                <div className="w-16 h-16 bg-white rounded-2xl shadow-sm flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                  <UploadCloud className="w-8 h-8 text-gov-primary" />
+                </div>
+                <p className="text-gray-700 font-bold mb-1">{t('uploadImage')}</p>
                 <p className="text-xs text-gray-400">{t('fileFormatInfo')}</p>
               </div>
             )}
-            <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} />
-          </label>
+            <input ref={fileInputRef} type="file" className="hidden" accept="image/*" onChange={handleImageUpload} />
+          </motion.label>
 
-          {error && <p className="text-red-500 text-sm font-medium">{error}</p>}
+          {/* Quick Tips Tooltip */}
+          <div className="bg-blue-50/50 p-4 rounded-2xl border border-blue-100/50">
+            <h4 className="text-sm font-bold text-blue-900 mb-3 flex items-center gap-2">
+              <AlertCircle className="w-4 h-4" /> {t('uploadTipsTitle')}
+            </h4>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <p className="text-[11px] font-bold text-blue-800 uppercase tracking-wider">{t('tipLighting')}</p>
+                <p className="text-[11px] text-blue-600/80 leading-relaxed">{t('tipLightingDesc')}</p>
+              </div>
+              <div>
+                <p className="text-[11px] font-bold text-blue-800 uppercase tracking-wider">{t('tipFocus')}</p>
+                <p className="text-[11px] text-blue-600/80 leading-relaxed">{t('tipFocusDesc')}</p>
+              </div>
+              <div>
+                <p className="text-[11px] font-bold text-blue-800 uppercase tracking-wider">{t('tipDistance')}</p>
+                <p className="text-[11px] text-blue-600/80 leading-relaxed">{t('tipDistanceDesc')}</p>
+              </div>
+            </div>
+          </div>
 
           <button 
             onClick={handleAnalyze}
-            disabled={loading}
-            className={`w-full py-3 rounded-lg font-bold text-white shadow-md transition-colors ${loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-gov-primary hover:bg-green-700'}`}
+            disabled={loading || !image}
+            className={`w-full py-4 rounded-2xl font-bold text-white shadow-lg transition-all active:scale-95 ${loading || !image ? 'bg-gray-300 cursor-not-allowed shadow-none' : 'bg-gov-primary hover:bg-gov-primary-dark hover:shadow-gov-primary/30'}`}
           >
             {loading ? (
               <span className="flex items-center justify-center gap-2">
@@ -96,62 +141,106 @@ export default function PlantDetection() {
                 {t('analyzing')}
               </span>
             ) : (
-              t('analyze')
+              <span className="flex items-center justify-center gap-2">
+                <Sparkles className="w-5 h-5" />
+                {t('analyze')}
+              </span>
             )}
           </button>
         </div>
 
-        {/* Result Section */}
-        <div className="flex flex-col justify-center">
+        {/* Result Area */}
+        <div className="relative">
           {!result ? (
-            <div className="h-full flex flex-col items-center justify-center text-gray-400 border-2 border-dashed border-gray-100 rounded-xl p-6 text-center">
-              <CheckCircle className="w-12 h-12 text-gray-200 mb-2" />
-              <p>{t('uploadPhotoPrompt')}</p>
+            <div className="h-full min-h-[300px] flex flex-col items-center justify-center text-gray-400 bg-gray-50/30 border-2 border-dashed border-gray-100 rounded-3xl p-8 text-center">
+              <Bot className="w-16 h-16 text-gray-200 mb-4" />
+              <p className="font-medium max-w-[200px]">{t('uploadPhotoPrompt')}</p>
             </div>
           ) : (
-            <div className="bg-gray-50 p-5 rounded-xl border border-gray-200 shadow-inner">
-              <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-200">
-                <span className="font-bold text-gray-700">{t('aiConfidence')}</span>
-                <div className="flex items-center gap-2">
-                  <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div 
-                      className={`h-full ${result.confidence > 85 ? 'bg-green-500' : 'bg-yellow-500'}`}
-                      style={{ width: `${result.confidence}%` }}
-                    ></div>
-                  </div>
-                  <span className={`font-bold ${result.confidence > 85 ? 'text-green-600' : 'text-yellow-600'}`}>
-                    {result.confidence}%
-                  </span>
+            <motion.div 
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="bg-white rounded-3xl border border-gray-100 shadow-xl overflow-hidden h-full"
+            >
+              <div className="bg-gray-900 p-5 text-white flex items-center justify-between">
+                <div>
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Diagnosis Status</p>
+                  <h3 className="text-lg font-bold flex items-center gap-2 text-green-400">
+                    <ShieldCheck className="w-5 h-5" /> Detected
+                  </h3>
+                </div>
+                <div className="text-right">
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">{t('aiConfidence')}</p>
+                  <p className="text-xl font-black text-white">{result.confidence}%</p>
                 </div>
               </div>
 
-              <div className="space-y-3">
-                <div className="flex flex-col sm:flex-row sm:gap-2">
-                  <span className="font-semibold text-gray-600 min-w-[120px]">{t('diseaseName')}</span>
-                  <span className="font-bold text-red-600">{result.disease}</span>
+              <div className="p-6 space-y-6">
+                <div>
+                  <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 block">{t('diseaseName')}</label>
+                  <p className="text-2xl font-black text-gray-900 leading-tight">
+                    {result.disease}
+                  </p>
                 </div>
-                <div className="flex flex-col sm:flex-row sm:gap-2">
-                  <span className="font-semibold text-gray-600 min-w-[120px]">{t('cause')}</span>
-                  <span className="text-gray-800">{result.cause}</span>
-                </div>
-                <div className="flex flex-col sm:flex-row sm:gap-2">
-                  <span className="font-semibold text-gray-600 min-w-[120px]">{t('solution')}</span>
-                  <ul className="list-disc list-inside text-gray-800 marker:text-gov-primary">
+
+                <div className="bg-blue-50/30 p-4 rounded-2xl border border-blue-50">
+                   <label className="text-[11px] font-bold text-blue-400 uppercase tracking-wider mb-2 block">{t('precautions')}</label>
+                   <ul className="space-y-3">
                     {result.solution.map((step, index) => (
-                      <li key={index}>{step}</li>
+                      <li key={index} className="flex items-start gap-3 text-sm text-blue-900/80 font-medium leading-relaxed">
+                        <div className="w-5 h-5 bg-blue-100 rounded-full flex items-center justify-center shrink-0 mt-0.5">
+                          <span className="text-[10px] font-bold text-blue-600">{index + 1}</span>
+                        </div>
+                        {step}
+                      </li>
                     ))}
                   </ul>
                 </div>
-              </div>
 
-              <div className="mt-5 p-3 bg-yellow-50 text-yellow-800 rounded-lg text-xs flex items-start gap-2 border border-yellow-100">
-                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-yellow-600" />
-                <p>{t('disclaimer')}</p>
+                <div className="pt-4 border-t border-gray-100 flex items-center justify-between">
+                   <p className="text-[9px] text-gray-400 italic">ID: {Math.random().toString(36).substr(2, 9).toUpperCase()}</p>
+                   <p className="text-[9px] font-bold text-gray-400">MODEL: {result.intelligence}</p>
+                </div>
               </div>
-            </div>
+            </motion.div>
+          )}
+          
+          {error && (
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9 }} 
+              animate={{ opacity: 1, scale: 1 }}
+              className="absolute inset-0 bg-white/90 backdrop-blur-sm flex flex-col items-center justify-center p-8 text-center rounded-3xl"
+            >
+              <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mb-4">
+                <AlertCircle className="w-8 h-8 text-red-500" />
+              </div>
+              <p className="text-red-600 font-bold mb-4">{error}</p>
+              <button onClick={() => setError(null)} className="px-6 py-2 bg-gray-900 text-white rounded-full text-sm font-bold">Dismiss</button>
+            </motion.div>
           )}
         </div>
       </div>
     </div>
+  );
+}
+
+// Additional decorative component
+function SparkleIcon({ className }) {
+  return (
+    <svg 
+      className={className}
+      viewBox="0 0 24 24" 
+      fill="none" 
+      stroke="currentColor" 
+      strokeWidth="2" 
+      strokeLinecap="round" 
+      strokeLinejoin="round" 
+    >
+      <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
+      <path d="M5 3L4 4" />
+      <path d="M19 3l1 1" />
+      <path d="M5 21l-1-1" />
+      <path d="M19 21l1-1" />
+    </svg>
   );
 }

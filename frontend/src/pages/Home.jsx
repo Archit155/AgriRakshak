@@ -21,6 +21,21 @@ export default function Home() {
     fetchSchemes();
   }, [category]);
 
+  // Voice Command Listener Integration
+  useEffect(() => {
+    const handleVoiceCommand = (e) => {
+      const { command, value } = e.detail;
+      if (command === 'search') {
+        setSearchQuery(value);
+      } else if (command === 'filter') {
+        setCategory(value);
+      }
+    };
+
+    window.addEventListener('voice-command', handleVoiceCommand);
+    return () => window.removeEventListener('voice-command', handleVoiceCommand);
+  }, []);
+
   // Debounced search could be added here, implementing simple search for UI
   useEffect(() => {
     if(searchQuery.trim() !== '') {
